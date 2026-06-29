@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DM Live Campaign Dashboard</title>
+    <style>
+        :root {
+            --bg-color: #121212;
+            --panel-bg: #1e1e1e;
+            --text-color: #e0e0e0;
+            --accent-color: #b71c1c;
+            --border-color: #333333;
+            --input-bg: #2a2a2a;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            user-select: none;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--accent-color);
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+        }
+
+        h1 { 
+            margin: 0; 
+            color: var(--accent-color); 
+            font-size: 24px;
+            letter-spacing: 1px;
+        }
+
+        .campaign-id {
+            font-size: 14px;
+            color: #888;
+            margin-left: 10px;
+        }
+
+        .btn {
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+
+        .btn:hover { background-color: #e53935; }
+        .btn-secondary { background-color: #424242; margin-right: 10px; }
+        .btn-secondary:hover { background-color: #616161; }
+
+        /* Dashboard Workspace */
+        #dashboard-workspace {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            min-height: 400px;
+        }
+
+        /* Widget Items */
+        .player-widget {
+            background-color: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+            cursor: move;
+            transition: transform 0.15s, box-shadow 0.15s;
+        }
+
+        .player-widget:active {
+            transform: scale(0.99);
+        }
+
+        .player-widget.dragging {
+            opacity: 0.4;
+            border: 2px dashed var(--accent-color);
+        }
+
+        .widget-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+
+        .player-name {
+            font-size: 18px;
+            font-weight: bold;
+            background: transparent;
+            border: none;
+            color: white;
+            width: 80%;
+            border-bottom: 1px solid transparent;
+        }
+
+        .player-name:focus {
+            border-bottom: 1px solid var(--accent-color);
+            outline: none;
+        }
+
+        .delete-btn {
+            background: transparent;
+            color: #757575;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        .delete-btn:hover { color: var(--accent-color); }
+
+        /* Statistics Layout */
+        .stat-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .stat-box {
+            background: var(--input-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 8px;
+            text-align: center;
+        }
+
+        .stat-box.full-width {
+            grid-column: span 2;
+        }
+
+        .stat-box label {
+            display: block;
+            font-size: 11px;
+            text-transform: uppercase;
+            color: #9e9e9e;
+            margin-bottom: 4px;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-box input[type="number"] {
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 20px;
+            text-align: center;
+            width: 100%;
+            font-weight: bold;
+            outline: none;
+        }
+
+        /* Combined HP split inputs */
+        .hp-split {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+        }
+        .hp-split input { width: 45% !important; }
+        .hp-divider { font-size: 18px; color: #666; }
+
+        /* Death Saves Elements */
+        .death-saves {
+            background: var(--input-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 8px 12px;
+            margin-bottom: 12px;
+        }
+        .death-saves-title {
+            font-size: 11px;
+            text-transform: uppercase;
+            color: #9e9e9e;
+            margin-bottom: 6px;
+            letter-spacing: 0.5px;
+        }
+        .save-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 4px;
+            font-size: 13px;
+        }
+        .save-row:last-child { margin-bottom: 0; }
+        .save-row span { width: 75px; color: #b0b0b0; }
+        .checkbox-group { display: flex; gap: 8px; }
+        .checkbox-group input[type="checkbox"] {
+            accent-color: var(--accent-color);
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+        }
+
+        /* Spell Slots Configuration */
+        .spell-slots {
+            background: var(--input-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 8px;
+        }
+        .spell-slots-title {
+            font-size: 11px;
+            text-transform: uppercase;
+            color: #9e9e9e;
+            margin-bottom: 6px;
+            letter-spacing: 0.5px;
+        }
+        .slots-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 6px;
+        }
+        .slot-field {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 4px;
+            padding: 4px;
+            font-size: 12px;
+            text-align: center;
+            color: #aaa;
+        }
+        .slot-field input {
+            width: 25px;
+            background: transparent;
+            border: none;
+            color: white;
+            text-align: center;
+            font-weight: bold;
+            font-size: 13px;
+            outline: none;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div>
+            <h1>Campaign Live Tracker <span class="campaign-id">(ID: 6280828)</span></h1>
+        </div>
+        <div>
+            <button class="btn btn-secondary" onclick="resetToDefault()">Reset Grid</button>
+            <button class="btn" onclick="addNewPlayer()">+ Add Character</button>
+        </div>
+    </header>
+
+    <div id="dashboard-workspace">
+        </div>
+
+    <script>
+        const workspace = document.getElementById('dashboard-workspace');
+        const STORAGE_KEY = 'dnd_campaign_dashboard_6280828';
+
+        // Default layout setup if cache is clean
+        const defaultParty = [
+            { id: "p1", name: "Fighter Hero", hp: 58, maxHp: 58, ac: 18, dc: 13, success: [false, false, false], failure: [false, false, false], slots: [0, 0, 0] },
+            { id: "p2", name: "Wizard Scholar", hp: 34, maxHp: 34, ac: 12, dc: 16, success: [false, false, false], failure: [false, false, false], slots: [4, 3, 2] },
+            { id: "p3", name: "Cleric Priest", hp: 43, maxHp: 43, ac: 16, dc: 15, success: [false, false, false], failure: [false, false, false], slots: [4, 2, 0] }
+        ];
+
+        let partyData = JSON.parse(localStorage.getItem(STORAGE_KEY)) || defaultParty;
+
+        function renderDashboard() {
+            workspace.innerHTML = '';
+            partyData.forEach((player) => {
+                workspace.appendChild(createWidget(player));
+            });
+            initDragAndDrop();
+        }
+
+        function createWidget(player) {
+            const card = document.createElement('div');
+            card.classList.add('player-widget');
+            card.setAttribute('draggable', 'true');
+            card.setAttribute('data-id', player.id);
+
+            card.innerHTML = `
+                <div class="widget-header">
+                    <input type="text" class="player-name" value="${player.name}" onchange="updateValue('${player.id}', 'name', this.value)">
+                    <button class="delete-btn" onclick="deletePlayer('${player.id}')">✕</button>
+                </div>
+
+                <div class="stat-group">
+                    <div class="stat-box full-width">
+                        <label>Hit Points (Current / Max)</label>
+                        <div class="hp-split">
+                            <input type="number" value="${player.hp}" onchange="updateValue('${player.id}', 'hp', this.value)">
+                            <span class="hp-divider">/</span>
+                            <input type="number" value="${player.maxHp}" onchange="updateValue('${player.id}', 'maxHp', this.value)">
+                        </div>
+                    </div>
+                    <div class="stat-box">
+                        <label>Armor Class</label>
+                        <input type="number" value="${player.ac}" onchange="updateValue('${player.id}', 'ac', this.value)">
+                    </div>
+                    <div class="stat-box">
+                        <label>Spell Save DC</label>
+                        <input type="number" value="${player.dc}" onchange="updateValue('${player.id}', 'dc', this.value)">
+                    </div>
+                </div>
+
+                <div class="death-saves">
+                    <div class="death-saves-title">Death Saving Throws</div>
+                    <div class="save-row">
+                        <span>Successes</span>
+                        <div class="checkbox-group">
+                            <input type="checkbox" ${player.success[0] ? 'checked' : ''} onclick="toggleSave('${player.id}', 'success', 0)">
+                            <input type="checkbox" ${player.success[1] ? 'checked' : ''} onclick="toggleSave('${player.id}', 'success', 1)">
+                            <input type="checkbox" ${player.success[2] ? 'checked' : ''} onclick="toggleSave('${player.id}', 'success', 2)">
+                        </div>
+                    </div>
+                    <div class="save-row">
+                        <span>Failures</span>
+                        <div class="checkbox-group">
+                            <input type="checkbox" ${player.failure[0] ? 'checked' : ''} onclick="toggleSave('${player.id}', 'failure', 0)">
+                            <input type="checkbox" ${player.failure[1] ? 'checked' : ''} onclick="toggleSave('${player.id}', 'failure', 1)">
+                            <input type="checkbox" ${player.failure[2] ? 'checked' : ''} onclick="toggleSave('${player.id}', 'failure', 2)">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="spell-slots">
+                    <div class="spell-slots-title">Spell Slots Available</div>
+                    <div class="slots-grid">
+                        <div class="slot-field">L1: <input type="number" value="${player.slots[0]}" onchange="updateSlot('${player.id}', 0, this.value)"></div>
+                        <div class="slot-field">L2: <input type="number" value="${player.slots[1]}" onchange="updateSlot('${player.id}', 1, this.value)"></div>
+                        <div class="slot-field">L3: <input type="number" value="${player.slots[2]}" onchange="updateSlot('${player.id}', 2, this.value)"></div>
+                    </div>
+                </div>
+            `;
+            return card;
+        }
+
+        function updateValue(id, key, val) {
+            const target = partyData.find(p => p.id === id);
+            if (target) {
+                target[key] = key === 'name' ? val : parseInt(val) || 0;
+                saveState();
+            }
+        }
+
+        function toggleSave(id, type, index) {
+            const target = partyData.find(p => p.id === id);
+            if (target) {
+                target[type][index] = !target[type][index];
+                saveState();
+            }
+        }
+
+        function updateSlot(id, levelIndex, val) {
+            const target = partyData.find(p => p.id === id);
+            if (target) {
+                target.slots[levelIndex] = parseInt(val) || 0;
+                saveState();
+            }
+        }
+
+        function addNewPlayer() {
+            const newChar = {
+                id: 'p_' + Date.now(),
+                name: "New Character",
+                hp: 10, maxHp: 10, ac: 10, dc: 10,
+                success: [false, false, false],
+                failure: [false, false, false],
+                slots: [0, 0, 0]
+            };
+            partyData.push(newChar);
+            renderDashboard();
+            saveState();
+        }
+
+        function deletePlayer(id) {
+            partyData = partyData.filter(p => p.id !== id);
+            renderDashboard();
+            saveState();
+        }
+
+        function resetToDefault() {
+            if(confirm("Reset entire tracking sheet layout to baseline template?")) {
+                partyData = JSON.parse(JSON.stringify(defaultParty));
+                renderDashboard();
+                saveState();
+            }
+        }
+
+        function saveState() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(partyData));
+        }
+
+        function initDragAndDrop() {
+            const widgets = document.querySelectorAll('.player-widget');
+            
+            widgets.forEach(widget => {
+                widget.addEventListener('dragstart', () => {
+                    widget.classList.add('dragging');
+                });
+
+                widget.addEventListener('dragend', () => {
+                    widget.classList.remove('dragging');
+                    saveNewOrder();
+                });
+            });
+
+            workspace.addEventListener('dragover', e => {
+                e.preventDefault();
+                const afterElement = getDragAfterElement(workspace, e.clientX);
+                const draggingWidget = document.querySelector('.dragging');
+                if (afterElement == null) {
+                    workspace.appendChild(draggingWidget);
+                } else {
+                    workspace.insertBefore(draggingWidget, afterElement);
+                }
+            });
+        }
+
+        function getDragAfterElement(container, x) {
+            const draggableElements = [...container.querySelectorAll('.player-widget:not(.dragging)')];
+
+            return draggableElements.reduce((closest, child) => {
+                const box = child.getBoundingClientRect();
+                const offset = x - box.left - box.width / 2;
+                if (offset < 0 && offset > closest.offset) {
+                    return { offset: offset, element: child };
+                } else {
+                    return closest;
+                }
+            }, { offset: Number.NEGATIVE_INFINITY }).element;
+        }
+
+        function saveNewOrder() {
+            const currentWidgets = [...workspace.querySelectorAll('.player-widget')];
+            const newOrder = [];
+            currentWidgets.forEach(widget => {
+                const id = widget.getAttribute('data-id');
+                const matchedPlayer = partyData.find(p => p.id === id);
+                if (matchedPlayer) newOrder.push(matchedPlayer);
+            });
+            partyData = newOrder;
+            saveState();
+        }
+
+        renderDashboard();
+    </script>
+</body>
+</html>
